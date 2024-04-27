@@ -1,2 +1,3 @@
 # Github-Portfolio
-git clone https://github.com/{aislinncorbett}/{aislinncorbett}.github.io.git
+git clone https://github.com/aislinncorbett/Github-Portfolio.git
+

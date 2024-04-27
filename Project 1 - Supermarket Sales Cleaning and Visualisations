@@ -1,0 +1,157 @@
+# import libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+# Handle the Dataset
+inpPath = 'C:\\Users\\ashyc\\Downloads\\'
+sales_data = pd.read_csv(inpPath + 'supermarket_sales-Sheet1.csv', delimiter=',')
+sales_data
+Invoice ID	Branch	City	Customer type	Gender	Product line	Unit price	Quantity	Tax 5%	Total	Date	Time	Payment	cogs	gross margin percentage	gross income	Rating
+0	750-67-8428	A	Yangon	Member	Female	Health and beauty	74.69	7	26.1415	548.9715	1/5/2019	13:08	Ewallet	522.83	4.761905	26.1415	9.1
+1	226-31-3081	C	Naypyitaw	Normal	Female	Electronic accessories	15.28	5	3.8200	80.2200	3/8/2019	10:29	Cash	76.40	4.761905	3.8200	9.6
+2	631-41-3108	A	Yangon	Normal	Male	Home and lifestyle	46.33	7	16.2155	340.5255	3/3/2019	13:23	Credit card	324.31	4.761905	16.2155	7.4
+3	123-19-1176	A	Yangon	Member	Male	Health and beauty	58.22	8	23.2880	489.0480	1/27/2019	20:33	Ewallet	465.76	4.761905	23.2880	8.4
+4	373-73-7910	A	Yangon	Normal	Male	Sports and travel	86.31	7	30.2085	634.3785	2/8/2019	10:37	Ewallet	604.17	4.761905	30.2085	5.3
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+995	233-67-5758	C	Naypyitaw	Normal	Male	Health and beauty	40.35	1	2.0175	42.3675	1/29/2019	13:46	Ewallet	40.35	4.761905	2.0175	6.2
+996	303-96-2227	B	Mandalay	Normal	Female	Home and lifestyle	97.38	10	48.6900	1022.4900	3/2/2019	17:16	Ewallet	973.80	4.761905	48.6900	4.4
+997	727-02-1313	A	Yangon	Member	Male	Food and beverages	31.84	1	1.5920	33.4320	2/9/2019	13:22	Cash	31.84	4.761905	1.5920	7.7
+998	347-56-2442	A	Yangon	Normal	Male	Home and lifestyle	65.82	1	3.2910	69.1110	2/22/2019	15:33	Cash	65.82	4.761905	3.2910	4.1
+999	849-09-3807	A	Yangon	Member	Female	Fashion accessories	88.34	7	30.9190	649.2990	2/18/2019	13:28	Cash	618.38	4.761905	30.9190	6.6
+1000 rows × 17 columns
+
+# Convert 'Date' and 'Time' columns to datetime
+sales_data['Date'] = pd.to_datetime(sales_data['Date'])
+sales_data['Time'] = pd.to_datetime(sales_data['Time'], format='%H:%M').dt.time
+sales_data['Customer type'] = sales_data['Customer type'].str.title()  # Capitalize
+sales_data['Product line'] = sales_data['Product line'].str.title()
+# Check for duplicates
+duplicate_rows = sales_data[sales_data.duplicated()]
+sales_data = sales_data.drop_duplicates()
+# Check for missing values 
+missing_values = sales_data.isnull().sum()
+# Check for any errors or outliers in 'Unit price' and 'Rating'
+outliers = sales_data[(sales_data['Unit price'] < 0) | (sales_data['Rating'] > 10)]
+sales_data
+Invoice ID	Branch	City	Customer type	Gender	Product line	Unit price	Quantity	Tax 5%	Total	Date	Time	Payment	cogs	gross margin percentage	gross income	Rating
+0	750-67-8428	A	Yangon	Member	Female	Health And Beauty	74.69	7	26.1415	548.9715	2019-01-05	13:08:00	Ewallet	522.83	4.761905	26.1415	9.1
+1	226-31-3081	C	Naypyitaw	Normal	Female	Electronic Accessories	15.28	5	3.8200	80.2200	2019-03-08	10:29:00	Cash	76.40	4.761905	3.8200	9.6
+2	631-41-3108	A	Yangon	Normal	Male	Home And Lifestyle	46.33	7	16.2155	340.5255	2019-03-03	13:23:00	Credit card	324.31	4.761905	16.2155	7.4
+3	123-19-1176	A	Yangon	Member	Male	Health And Beauty	58.22	8	23.2880	489.0480	2019-01-27	20:33:00	Ewallet	465.76	4.761905	23.2880	8.4
+4	373-73-7910	A	Yangon	Normal	Male	Sports And Travel	86.31	7	30.2085	634.3785	2019-02-08	10:37:00	Ewallet	604.17	4.761905	30.2085	5.3
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+995	233-67-5758	C	Naypyitaw	Normal	Male	Health And Beauty	40.35	1	2.0175	42.3675	2019-01-29	13:46:00	Ewallet	40.35	4.761905	2.0175	6.2
+996	303-96-2227	B	Mandalay	Normal	Female	Home And Lifestyle	97.38	10	48.6900	1022.4900	2019-03-02	17:16:00	Ewallet	973.80	4.761905	48.6900	4.4
+997	727-02-1313	A	Yangon	Member	Male	Food And Beverages	31.84	1	1.5920	33.4320	2019-02-09	13:22:00	Cash	31.84	4.761905	1.5920	7.7
+998	347-56-2442	A	Yangon	Normal	Male	Home And Lifestyle	65.82	1	3.2910	69.1110	2019-02-22	15:33:00	Cash	65.82	4.761905	3.2910	4.1
+999	849-09-3807	A	Yangon	Member	Female	Fashion Accessories	88.34	7	30.9190	649.2990	2019-02-18	13:28:00	Cash	618.38	4.761905	30.9190	6.6
+1000 rows × 17 columns
+
+# Sales Over Time
+# Group data by Date and sum up Total
+sales_over_time = sales_data.groupby(sales_data['Date']).agg({'Total': 'sum'})
+# Plotting Sales Over Time
+plt.figure(figsize=(10, 6))
+plt.plot(sales_over_time.index, sales_over_time['Total'], marker='o', color='purple')
+plt.title('Sales Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Sales')
+plt.grid(True)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Sales by Product Line
+sales_by_product_line = sales_data.groupby('Product line')['Total'].sum().sort_values(ascending=False)
+sales_by_product_line
+Product line
+Food And Beverages        56144.8440
+Sports And Travel         55122.8265
+Electronic Accessories    54337.5315
+Fashion Accessories       54305.8950
+Home And Lifestyle        53861.9130
+Health And Beauty         49193.7390
+Name: Total, dtype: float64
+# Grpah
+plt.figure(figsize=(10, 6))
+sales_by_product_line.plot(kind='bar', color='pink')
+plt.title('Sales by Product Line')
+plt.xlabel('Product Line')
+plt.ylabel('Total Sales')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Customer Type Distribution
+customer_type_counts = sales_data['Customer type'].value_counts()
+customer_type_counts
+Member    501
+Normal    499
+Name: Customer type, dtype: int64
+plt.figure(figsize=(7, 7))
+customer_type_counts.plot(kind='pie', autopct='%1.1f%%', startangle=90, colors=['blue', 'lightblue'])
+plt.title('Customer Type Distribution')
+plt.ylabel('')  # Remove y-label for pie chart
+plt.show()
+
+# Recalculate aggregates after correcting the time parsing
+sales_by_product_line = sales_data.groupby('Product line')['Total'].sum().sort_values(ascending=False)
+customer_type_counts = sales_data['Customer type'].value_counts()
+import seaborn as sns
+# Histogram of customer ratings
+plt.figure(figsize=(10, 6))
+sns.histplot(sales_data['Rating'], bins=10, kde=True)
+plt.title('Distribution of Customer Ratings')
+plt.xlabel('Rating')
+plt.ylabel('Frequency')
+Text(0, 0.5, 'Frequency')
+
+#  Scatter plot of Total vs. Quantity
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Quantity', y='Total', data=sales_data)
+plt.title('Total Sales vs. Quantity Sold')
+plt.xlabel('Quantity')
+plt.ylabel('Total Sales')
+
+plt.show()
+
+# Output the number of duplicate rows
+duplicate_rows
+Invoice ID	Branch	City	Customer type	Gender	Product line	Unit price	Quantity	Tax 5%	Total	Date	Time	Payment	cogs	gross margin percentage	gross income	Rating
+# missing values in the dataset
+missing_values = sales_data.isnull().sum()
+# Sales by city
+plt.figure(figsize=(10, 6))
+sns.barplot(x=sales_data.groupby('City')['Total'].sum().index,
+            y=sales_data.groupby('City')['Total'].sum().values)
+plt.title('Total Sales by City')
+plt.xlabel('City')
+plt.ylabel('Total Sales')
+plt.tight_layout()
+
+# Time series plot of sales over the date range
+sales_data['Date'] = pd.to_datetime(sales_data['Date']) 
+
+# Ensure 'Date' is in datetime format
+daily_sales = sales_data.groupby('Date')['Total'].sum()
+plt.figure(figsize=(12, 6))
+daily_sales.plot()
+plt.title('Daily Sales Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Sales')
+plt.grid(True)
+plt.tight_layout()
+
+# Connection between gender and sales
+gender_sales = sales_data.groupby(['Product line', 'Gender'])['Total'].sum().unstack()
+plt.figure(figsize=(12, 6))
+gender_sales.plot(kind='bar', color=['green','pink'])
+plt.title('Total Sales by Gender for Each Product Line')
+plt.xlabel('Product Line')
+plt.ylabel('Total Sales')
+plt.xticks(rotation=45)
+plt.legend(title='Gender')
+plt.tight_layout()
+
+plt.show()
+<Figure size 1200x600 with 0 Axes>
